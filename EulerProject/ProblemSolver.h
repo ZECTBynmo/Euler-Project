@@ -11,6 +11,11 @@
 using namespace std;
 
 namespace Solvers {
+	
+	struct BinaryTreeResults {
+		uint uValue,
+			 uIndex;	
+	};
 
 	//////////////////////////////////////////////////////////////////////////
 	//! Head functions for all problems
@@ -25,7 +30,7 @@ namespace Solvers {
 		vector<QString> ParseFileForStrings( QString strFileName );
 		
 		//! Recursive binary tree lookahead, returns the sum of the lookahead from iRow and iElement
-		uint BinaryLookahead( uint uLookLength, uint iRow, uint iElement, vector< vector<uint> >& pBinaryTree );
+		BinaryTreeResults BinaryLookahead( uint uLookLength, uint iRow, uint iElement, vector< vector<uint> >& pBinaryTree );
 		
 		//! Recursively finds the number of paths given a width and height
 		uint FindNumPaths( uint uHeight, uint uWidth );

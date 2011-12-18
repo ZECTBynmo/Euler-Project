@@ -575,10 +575,10 @@ uint Solvers::ProblemSolver::ProblemSixteen() {
 uint Solvers::ProblemSolver::ProblemEighteen() {
 	vector< vector<uint> > uNumbers= ParseFileForUints( "C:/euler/problem18.txt" );
 	
-	vector<uint> uChosenNumbers;
+	vector<BinaryTreeResults> chosenNumbers;
 	
-	const uint LOOKAHEAD_LENGTH= 3,
-			   TOTAL_ROWS= 15;
+	const uint LOOKAHEAD_LENGTH= uNumbers.size(),
+			   TOTAL_ROWS= uNumbers.size();
 	
 	uint uCurrentRow= 0,
 		 uSum= 0;
@@ -587,31 +587,40 @@ uint Solvers::ProblemSolver::ProblemEighteen() {
 	for( uint iRow= 0; iRow<TOTAL_ROWS; ++iRow ) {
 		uint uMaxNum= 0,
 			 iMaxElement= 0;
+	
+		BinaryTreeResults prevNumber;
 		
-		// Look at every single element in the current row
-		for( uint iElement=0; iElement<uNumbers[iRow].size()-1; ++iElement ) {
-			if ( iRow < TOTAL_ROWS - LOOKAHEAD_LENGTH ) {
-				uint uLook= BinaryLookahead( LOOKAHEAD_LENGTH - 1, iRow, iElement, uNumbers );
-				if( uLook > uMaxNum ) {
-					iMaxElement= iElement;
-					uMaxNum= uLook;
-				}
-			} else {
-				if( (int)TOTAL_ROWS - (int)iRow - 2 >= 0 ) {
-					uint uLook= BinaryLookahead( TOTAL_ROWS - iRow - 2, iRow, iElement, uNumbers );
-					if( uLook > uMaxNum ) {
-						iMaxElement= iElement;
-						uMaxNum= uLook;
+		if( iRow != 0 ) {
+			prevNumber= chosenNumbers[chosenNumbers.size()-1];
+		
+			// Search down the tree at the nest two numbers
+			for( uint iElement=prevNumber.uIndex; iElement<prevNumber.uIndex+1; ++iElement ) {
+				if ( iRow < TOTAL_ROWS - LOOKAHEAD_LENGTH ) {
+					BinaryTreeResults uLook= BinaryLookahead( LOOKAHEAD_LENGTH, iRow, iElement, uNumbers );
+					if( uLook.uValue > uMaxNum ) {
+						iMaxElement= uLook.uIndex;
+						uMaxNum= uLook.uValue;
+					}
+				} else {
+					if( (int)TOTAL_ROWS - (int)iRow - 1 >= 0 ) {
+						BinaryTreeResults uLook= BinaryLookahead( (int)TOTAL_ROWS - (int)iRow - 1, iRow, iElement, uNumbers );
+						if( uLook.uValue > uMaxNum ) {
+							iMaxElement= uLook.uIndex;
+							uMaxNum= uLook.uValue;
+						}
 					}
 				}
-			}
-		} // end for each element
-		uChosenNumbers.push_back( uNumbers[iRow][iMaxElement] );
+			} // end for each element
+		}
+		BinaryTreeResults newNumber;
+		newNumber.uIndex= iMaxElement;
+		newNumber.uValue= uNumbers[iRow][iMaxElement];
+		chosenNumbers.push_back( newNumber );
 	} // end for each row
 	
 	// Sum up the elements in the path we found
-	for( uint iIndex=0; iIndex<uChosenNumbers.size(); ++iIndex )
-		uSum+= uChosenNumbers[iIndex];
+	for( uint iIndex=0; iIndex<chosenNumbers.size(); ++iIndex )
+		uSum+= chosenNumbers[iIndex].uValue;
 	
 	return uSum;
 } // end ProblemSolver::ProblemEighteen()
@@ -619,30 +628,38 @@ uint Solvers::ProblemSolver::ProblemEighteen() {
 
 //////////////////////////////////////////////////////////////////////////////
 /*! Recursive binary tree lookahead, returns the sum of the lookahead from iRow and iElement */
-uint Solvers::ProblemSolver::BinaryLookahead( uint uLookLength, uint iRow, uint iElement, vector< vector<uint> >& pBinaryTree ) {
-	// Loop through the row one lower than the element we were given, and call this function again 
+Solvers::BinaryTreeResults Solvers::ProblemSolver::BinaryLookahead( uint uLookLength, uint iRow, uint iElement, vector< vector<uint> >& pBinaryTree ) {
+	BinaryTreeResults searchResults;
 	
+	// Loop through the row one lower than the element we were given, and call this function again 
 	if( uLookLength >1000 )
 		uint test=9;
-		
-	iRow+= 1;
 	
 	if( uLookLength > 0 ) {
+		uint iNextRow= iRow + 1;
 		uLookLength-= 1;
-		uint uFirstLook= BinaryLookahead(uLookLength, iRow, iElement, pBinaryTree),
-			 uSecondLook= BinaryLookahead(uLookLength, iRow, iElement+1, pBinaryTree); 
+		BinaryTreeResults uFirstLook= BinaryLookahead(uLookLength, iNextRow, iElement, pBinaryTree),
+						  uSecondLook= BinaryLookahead(uLookLength, iNextRow, iElement+1, pBinaryTree); 
 	
-		if( uFirstLook < uSecondLook ) {
-			return pBinaryTree[iRow][iElement] + uFirstLook;
+		if( pBinaryTree[iRow][iElement] + uFirstLook.uValue > pBinaryTree[iRow][iElement+1] + uSecondLook.uValue ) {
+			searchResults.uValue= pBinaryTree[iRow][iElement] + uFirstLook.uValue;
+			searchResults.uIndex= iElement;
+			return searchResults;
 		} else {
-			return pBinaryTree[iRow][iElement+1] + uSecondLook;
+			searchResults.uValue= pBinaryTree[iRow][iElement+1] + uSecondLook.uValue;
+			searchResults.uIndex= iElement+1;
+			return searchResults;
 		}
 	} else {
 		// If we're not doing any more lookahead, find the greatest element and add that to the sum, and 
 		if( pBinaryTree[iRow][iElement] > pBinaryTree[iRow][iElement+1] ) {
-			return pBinaryTree[iRow][iElement];
+			searchResults.uValue= pBinaryTree[iRow][iElement];
+			searchResults.uIndex= iElement;
+			return searchResults;
 		} else {
-			return pBinaryTree[iRow][iElement+1];
+			searchResults.uValue= pBinaryTree[iRow][iElement+1];
+			searchResults.uIndex= iElement+1;
+			return searchResults;
 		}
 	}
 } // end ProblemSolver::BinaryLookahead()
