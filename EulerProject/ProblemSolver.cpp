@@ -12,15 +12,55 @@
 #include <QFile>
 #include <QTextStream>
 #include "qstringlist.h"
-
+#include "bigint-2010.04.30\BigIntegerLibrary.hh"
 
 //////////////////////////////////////////////////////////////////////////////
 /*! Initialize ourselves */
 Solvers::ProblemSolver::ProblemSolver( uint uProblem ) {
-	uint test= ProblemEighteen();
+	uint test= ProblemSeventeen();
 	
  	uint ender= 0;
 } // end ProblemSolver::ProblemSolver()
+
+
+//////////////////////////////////////////////////////////////////////////////
+/*! Recursive binary tree lookahead, returns the sum of the lookahead from iRow and iElement */
+Solvers::BinaryTreeResults Solvers::ProblemSolver::BinaryLookahead( uint uLookLength, uint iRow, uint iElement, vector< vector<uint> >& pBinaryTree ) {
+	BinaryTreeResults searchResults;
+
+	// Loop through the row one lower than the element we were given, and call this function again	
+	if( uLookLength > 0 ) {
+		uint iNextRow= iRow + 1;
+		uLookLength-= 1;
+		BinaryTreeResults uFirstLook= BinaryLookahead(uLookLength, iNextRow, iElement, pBinaryTree),
+			uSecondLook= BinaryLookahead(uLookLength, iNextRow, iElement+1, pBinaryTree); 
+
+
+		if( uLookLength > 1000 )
+			uint test=9;
+
+		if( pBinaryTree[iRow][iElement] + uFirstLook.uValue > pBinaryTree[iRow][iElement+1] + uSecondLook.uValue ) {
+			searchResults.uValue= pBinaryTree[iRow][iElement] + uFirstLook.uValue;
+			searchResults.uIndex= iElement;
+			return searchResults;
+		} else {
+			searchResults.uValue= pBinaryTree[iRow][iElement+1] + uSecondLook.uValue;
+			searchResults.uIndex= iElement+1;
+			return searchResults;
+		}
+	} else {
+		// If we're not doing any more lookahead, find the greatest element and add that to the sum, and 
+		if( pBinaryTree[iRow][iElement] > pBinaryTree[iRow][iElement+1] ) {
+			searchResults.uValue= pBinaryTree[iRow][iElement];
+			searchResults.uIndex= iElement;
+			return searchResults;
+		} else {
+			searchResults.uValue= pBinaryTree[iRow][iElement+1];
+			searchResults.uIndex= iElement+1;
+			return searchResults;
+		}
+	}
+} // end ProblemSolver::BinaryLookahead()
 
 
 //////////////////////////////////////////////////////////////////////////////
@@ -572,12 +612,62 @@ uint Solvers::ProblemSolver::ProblemSixteen() {
 
 //////////////////////////////////////////////////////////////////////////////
 /*! A problem */
+uint Solvers::ProblemSolver::ProblemSeventeen() {
+	vector<QString> strNumList= ParseFileForStrings( "C:/euler/problem17.txt" );
+	uint uLengthSum= 0;
+	
+	for( uint uNumber=1; uNumber<1000; ++uNumber ) {
+		bool bExactHundred= false;
+		QString strNumber;
+	
+		uint uHundreds= floor( (float)uNumber / 100.0f ),
+			 uTens= floor( ((float)uNumber - (uHundreds*100.0f)) / 10.0f ),
+			 uOnes= floor( ((float)uNumber - (uHundreds*100.0f) - (uTens*10.0f)) );
+		
+		if( uHundreds > 0 ) {
+			strNumber+= strNumList[uHundreds];
+			strNumber+= "Hundred";
+			
+			if( uNumber > uHundreds * 100 ) {
+				strNumber+= "And";
+			} else {
+				bExactHundred= true;
+			}
+		}
+		
+		if( uTens > 0 ) {
+			
+			// We don't have specific tens words until twenty
+			if( uTens > 1 ) {
+				strNumber+= strNumList[uTens+17];
+			}
+		}
+		
+		if( !bExactHundred && (uOnes > 0 || uTens < 2) ) {
+			if( uTens == 1 ) {
+				strNumber+= strNumList[uOnes+9];
+			} else {
+				strNumber+= strNumList[uOnes-1];
+			}
+		}
+	
+		uLengthSum+= strNumber.length();			
+	}
+	
+	uLengthSum+= QString("onethousand").length();
+	
+	return uLengthSum;
+} // end ProblemSolver::ProblemSeventeen()
+
+
+//////////////////////////////////////////////////////////////////////////////
+/*! A problem */
 uint Solvers::ProblemSolver::ProblemEighteen() {
-	vector< vector<uint> > uNumbers= ParseFileForUints( "C:/euler/problem18.txt" );
+	vector< vector<uint> > uNumbers= ParseFileForUints( "C:/euler/problem67.txt" );
 	
 	vector<BinaryTreeResults> chosenNumbers;
 	
-	const uint LOOKAHEAD_LENGTH= uNumbers.size(),
+	const uint LOOKAHEAD_LENGTH= 20,
 			   TOTAL_ROWS= uNumbers.size();
 	
 	uint uCurrentRow= 0,
@@ -627,39 +717,41 @@ uint Solvers::ProblemSolver::ProblemEighteen() {
 
 
 //////////////////////////////////////////////////////////////////////////////
-/*! Recursive binary tree lookahead, returns the sum of the lookahead from iRow and iElement */
-Solvers::BinaryTreeResults Solvers::ProblemSolver::BinaryLookahead( uint uLookLength, uint iRow, uint iElement, vector< vector<uint> >& pBinaryTree ) {
-	BinaryTreeResults searchResults;
-	
-	// Loop through the row one lower than the element we were given, and call this function again 
-	if( uLookLength >1000 )
-		uint test=9;
-	
-	if( uLookLength > 0 ) {
-		uint iNextRow= iRow + 1;
-		uLookLength-= 1;
-		BinaryTreeResults uFirstLook= BinaryLookahead(uLookLength, iNextRow, iElement, pBinaryTree),
-						  uSecondLook= BinaryLookahead(uLookLength, iNextRow, iElement+1, pBinaryTree); 
-	
-		if( pBinaryTree[iRow][iElement] + uFirstLook.uValue > pBinaryTree[iRow][iElement+1] + uSecondLook.uValue ) {
-			searchResults.uValue= pBinaryTree[iRow][iElement] + uFirstLook.uValue;
-			searchResults.uIndex= iElement;
-			return searchResults;
-		} else {
-			searchResults.uValue= pBinaryTree[iRow][iElement+1] + uSecondLook.uValue;
-			searchResults.uIndex= iElement+1;
-			return searchResults;
-		}
-	} else {
-		// If we're not doing any more lookahead, find the greatest element and add that to the sum, and 
-		if( pBinaryTree[iRow][iElement] > pBinaryTree[iRow][iElement+1] ) {
-			searchResults.uValue= pBinaryTree[iRow][iElement];
-			searchResults.uIndex= iElement;
-			return searchResults;
-		} else {
-			searchResults.uValue= pBinaryTree[iRow][iElement+1];
-			searchResults.uIndex= iElement+1;
-			return searchResults;
-		}
+/*! A problem */
+uint Solvers::ProblemSolver::ProblemTwenty() {	
+ 	BigInteger uBigNumber = 1;
+ 	
+	for( uint iNumber= 1; iNumber<=100; ++iNumber ) {
+		uBigNumber*= iNumber;
 	}
-} // end ProblemSolver::BinaryLookahead()
+	
+	QString strNumber= QString::fromStdString( bigIntegerToString(uBigNumber) ); 
+	
+	uint uSum= 0;
+	for( uint iDigit= 0; iDigit< strNumber.length(); ++iDigit ){
+		uSum+= strNumber.mid(iDigit, 1).toUInt();
+	}
+	
+	return uSum;
+} // end ProblemSolver::ProblemTwenty()
+
+
+//////////////////////////////////////////////////////////////////////////////
+/*! A problem */
+uint Solvers::ProblemSolver::ProblemTwentyFive() {
+	BigInteger uFibb= 1,
+			   uLastFibb= 0;
+	
+	QString strFibb;
+	uint uRound= 0;
+	while( strFibb.length() < 1000 ) {
+		BigInteger uTemp= uFibb;
+		uFibb+= uLastFibb;
+		uLastFibb= uTemp;
+		
+		uRound++;
+		strFibb= QString::fromStdString( bigIntegerToString(uFibb) );
+	}
+
+	return uRound+1;
+} // end ProblemSolver::ProblemTwentyFive()

@@ -8,6 +8,7 @@
 #include "qglobal.h"
 #include <QString>
 #include <vector>
+#include "bigint-2010.04.30\BigInteger.hh"
 using namespace std;
 
 namespace Solvers {
@@ -51,7 +52,12 @@ namespace Solvers {
 		uint ProblemFourteen();				//!< A problem
 		uint ProblemFifteen();				//!< A problem
 		uint ProblemSixteen();				//!< A problem
+		uint ProblemSeventeen();			//!< A problem
 		uint ProblemEighteen();				//!< A problem
+		uint ProblemTwenty();				//!< A problem
+		uint ProblemTwentyFive();			//!< A problem
+		
+		BigInteger* m_pBigInteger;
 	}; // end class ProblemSolver
 	
 } // end namespace Solvers
